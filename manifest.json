@@ -1,0 +1,9 @@
+{
+  "id": "kadima-sync",
+  "name": "Kadima Sync",
+  "version": "0.1.0",
+  "minAppVersion": "1.6.0",
+  "description": "One-click Kadima sync for Obsidian.",
+  "author": "Kadima",
+  "isDesktopOnly": false
+}

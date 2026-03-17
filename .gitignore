@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+main.js
+dist/
+*.log
+.env
+.obsidian/
+test_output.txt
+test_log.txt
+docs/plan.md
