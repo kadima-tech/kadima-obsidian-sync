@@ -55,6 +55,19 @@ export class KadimaApiClient {
     );
   }
 
+  async waitForAuthSession(
+    sessionId: string,
+    pollToken: string,
+    timeoutMs: number
+  ): Promise<DeviceAuthSessionStatusResponse> {
+    return this.request<DeviceAuthSessionStatusResponse>(
+      `/api/obsidian/auth/sessions/${encodeURIComponent(
+        sessionId,
+      )}?pollToken=${encodeURIComponent(pollToken)}&wait=true`,
+      { timeout: timeoutMs }
+    );
+  }
+
   async refreshAuthSession(refreshToken: string): Promise<RefreshAuthSessionResponse> {
     return this.request<RefreshAuthSessionResponse>("/api/obsidian/auth/refresh", {
       method: "POST",
@@ -168,9 +181,10 @@ export class KadimaApiClient {
       auth?: boolean;
       body?: unknown;
       headers?: Record<string, string>;
+      timeout?: number;
     } = {}
   ): Promise<T> {
-    const { method = "GET", auth = false, body, headers = {} } = options;
+    const { method = "GET", auth = false, body, headers = {}, timeout } = options;
     const url = joinUrl(this.getSettings().apiBaseUrl, path);
     const requestHeaders: Record<string, string> = {
       ...headers
@@ -193,8 +207,9 @@ export class KadimaApiClient {
       method,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
-      throw: false
-    });
+      throw: false,
+      timeout: timeout
+    } as any);
 
     if (response.status >= 400) {
       const payload = response.json ?? response.text;

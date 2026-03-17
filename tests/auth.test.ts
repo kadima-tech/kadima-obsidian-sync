@@ -54,12 +54,11 @@ describe('KadimaAuthService', () => {
             })
         );
 
-        // 2. Mock polling
-        let pollCount = 0;
+        // 2. Mock waiting for approval
         server.use(
-            http.get(`${API_BASE}/api/obsidian/auth/sessions/s-1`, () => {
-                pollCount++;
-                if (pollCount < 2) {
+            http.get(`${API_BASE}/api/obsidian/auth/sessions/s-1`, ({ request }) => {
+                const url = new URL(request.url);
+                if (url.searchParams.get('wait') !== 'true') {
                     return HttpResponse.json({ status: 'pending' });
                 }
                 return HttpResponse.json({
@@ -82,7 +81,6 @@ describe('KadimaAuthService', () => {
         expect(session.accessToken).toBe('at-1');
         expect(store.auth?.accessToken).toBe('at-1');
         expect(openSpy).toHaveBeenCalledWith('https://kadima.ai/approve', '_blank', expect.any(String));
-        expect(pollCount).toBe(2);
     });
 
     it('should refresh token when needed', async () => {

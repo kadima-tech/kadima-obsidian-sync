@@ -13,13 +13,19 @@ export async function requestUrl(options: {
     headers?: Record<string, string>;
     body?: string | ArrayBuffer;
     throw?: boolean;
+    timeout?: number;
 }) {
+    const controller = options.timeout ? new AbortController() : null;
+    const timeoutId = (controller && options.timeout) ? setTimeout(() => controller.abort(), options.timeout) : null;
+
     try {
         const response = await fetch(options.url, {
             method: options.method || "GET",
             headers: options.headers,
             body: options.body,
+            signal: controller?.signal,
         });
+        if (timeoutId) clearTimeout(timeoutId);
 
     const arrayBuffer = await response.arrayBuffer();
     const text = new TextDecoder().decode(arrayBuffer);

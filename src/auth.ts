@@ -40,26 +40,25 @@ export class KadimaAuthService {
     window.open(session.approvalUrl, "_blank", "noopener,noreferrer");
     this.setStatus("Waiting for Kadima approval");
 
-    while (Date.now() < session.expiresAt) {
-      await sleep(session.pollIntervalMs);
-      const status = await this.api.pollAuthSession(
-        session.sessionId,
-        session.pollToken,
-      );
+    const timeoutMs = session.expiresAt - Date.now();
+    const status = await this.api.waitForAuthSession(
+      session.sessionId,
+      session.pollToken,
+      timeoutMs
+    );
 
-      if (status.status === "expired") {
-        throw new Error("The Kadima login session expired.");
-      }
+    if (status.status === "expired") {
+      throw new Error("The Kadima login session expired.");
+    }
 
-      if (status.status === "approved" && status.auth) {
-        const auth: AuthSession = {
-          ...status.auth,
-          connectedAt: Date.now()
-        };
-        this.store.setAuth(auth);
-        this.setStatus(`Connected as ${auth.user.email ?? auth.user.uid}`);
-        return auth;
-      }
+    if (status.status === "approved" && status.auth) {
+      const auth: AuthSession = {
+        ...status.auth,
+        connectedAt: Date.now()
+      };
+      this.store.setAuth(auth);
+      this.setStatus(`Connected as ${auth.user.email ?? auth.user.uid}`);
+      return auth;
     }
 
     throw new Error("Timed out waiting for Kadima login approval.");

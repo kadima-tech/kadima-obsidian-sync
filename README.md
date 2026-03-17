@@ -1,6 +1,6 @@
 # Kadima Sync for Obsidian
 
-Kadima Sync is a custom Obsidian plugin that syncs a vault through Kadima's centralized API available for all paid subscriptions to the Kadima ecosystem, including Kadima and Talebuddy.
+Kadima Sync is a custom Obsidian plugin that syncs a vault through Kadima's centralized API available for all paid subscriptions to the Kadima ecosystem, including Draggen and Talebuddy.
 
 ## What It Does
 
