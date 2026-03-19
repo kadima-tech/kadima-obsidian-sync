@@ -21,6 +21,7 @@ export interface AuthSession {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  vaultId: string;
   connectedAt: number;
   user: UserSummary;
   capabilities?: string[];
@@ -88,6 +89,7 @@ export interface RefreshAuthSessionResponse {
   accessToken: string;
   refreshToken?: string;
   expiresAt: number;
+  vaultId: string;
   capabilities?: string[];
 }
 

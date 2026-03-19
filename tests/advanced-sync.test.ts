@@ -36,6 +36,7 @@ describe('Advanced Sync Scenarios', () => {
 
         store.setAuth({
             accessToken: 'token', refreshToken: 'ref', expiresAt: Date.now() + 1000,
+            vaultId: 'v1',
             connectedAt: Date.now(), user: { uid: 'u1' }
         });
         store.setVaultId('v1');

@@ -135,6 +135,10 @@ export class KadimaSyncEngine {
     }
   }
 
+  private getSelectedVaultId(): string | null {
+    return this.store.auth?.vaultId ?? null;
+  }
+
   private async onVaultChanged(
     file: TAbstractFile,
     operation: PendingMutation["operation"]
@@ -209,14 +213,23 @@ export class KadimaSyncEngine {
   }
 
   private async ensureBootstrap(): Promise<void> {
+    const selectedVaultId = this.getSelectedVaultId();
+    if (!selectedVaultId) {
+      throw new Error("No Kadima vault selected for this device.");
+    }
+
+    if (this.store.sync.vaultId !== selectedVaultId) {
+      this.store.resetSyncState();
+      this.store.setVaultId(selectedVaultId);
+    }
+
     if (this.store.sync.vaultId && this.store.sync.cursor) {
       return;
     }
 
     const knownFiles = await this.buildKnownFileSnapshot();
     const response = await this.api.bootstrap({
-      vaultName: this.app.vault.getName(),
-      cursor: this.store.sync.cursor,
+      vaultId: selectedVaultId,
       knownFiles
     });
 
@@ -242,7 +255,7 @@ export class KadimaSyncEngine {
   }
 
   private async pullRemoteChanges(): Promise<void> {
-    const vaultId = this.store.sync.vaultId;
+    const vaultId = this.getSelectedVaultId() ?? this.store.sync.vaultId;
     if (!vaultId) {
       return;
     }
@@ -268,7 +281,7 @@ export class KadimaSyncEngine {
   }
 
   private async pushPendingChanges(): Promise<void> {
-    const vaultId = this.store.sync.vaultId;
+    const vaultId = this.getSelectedVaultId() ?? this.store.sync.vaultId;
     if (!vaultId) {
       return;
     }
@@ -344,6 +357,10 @@ export class KadimaSyncEngine {
     vaultId: string,
     mutation: PendingMutation
   ): Promise<SyncPushChange | null> {
+    if (!mutation.path) {
+      console.warn("[KadimaSync] Skipping pending mutation with empty path", mutation);
+      return null;
+    }
     const fileState = this.store.getFileState(mutation.path);
 
     if (mutation.operation === "delete") {
@@ -451,6 +468,10 @@ export class KadimaSyncEngine {
   }
 
   private async applyRemoteMutation(mutation: RemoteMutation): Promise<void> {
+    if (!mutation.path) {
+      console.warn("[KadimaSync] Skipping remote mutation with empty path", mutation);
+      return;
+    }
     if (!shouldSyncPath(mutation.path, this.getSettings().syncHiddenFiles)) {
       return;
     }
@@ -559,6 +580,10 @@ export class KadimaSyncEngine {
     resolvedPayload?: string | ArrayBuffer
   ): Promise<void> {
     const mutation = entry as RemoteMutation;
+    if (!mutation.path) {
+      console.warn("[KadimaSync] Skipping remote entry with empty path", mutation);
+      return;
+    }
     const existing = this.app.vault.getAbstractFileByPath(mutation.path);
 
     if (mutation.operation === "rename" && mutation.previousPath) {
@@ -663,6 +688,9 @@ export class KadimaSyncEngine {
     payload: string | ArrayBuffer,
     existing?: TAbstractFile | null
   ): Promise<void> {
+    if (!path) {
+      throw new Error("Cannot write file: path is empty");
+    }
     await this.ensureFolder(dirname(path));
     const current = existing ?? this.app.vault.getAbstractFileByPath(path);
 
@@ -693,6 +721,7 @@ export class KadimaSyncEngine {
     const segments = folderPath.split("/");
     let current = "";
     for (const segment of segments) {
+      if (!segment) continue;
       current = current ? normalizePath(`${current}/${segment}`) : segment;
       if (!this.app.vault.getAbstractFileByPath(current)) {
         await this.app.vault.createFolder(current);

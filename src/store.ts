@@ -17,7 +17,7 @@ function normalizeSyncState(sync?: Partial<SyncState>): SyncState {
     lastSyncAt: sync?.lastSyncAt,
     lastSyncError: sync?.lastSyncError,
     fileStates: sync?.fileStates ?? {},
-    pendingMutations: sync?.pendingMutations ?? [],
+    pendingMutations: (sync?.pendingMutations ?? []).filter((m) => !!m.path),
     conflicts: sync?.conflicts ?? []
   };
 }

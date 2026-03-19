@@ -25,14 +25,6 @@ Not implemented yet:
 - stable vault identity independent of vault name
 - dashboard UI for managing approved devices
 
-## Local Prerequisites
-
-- Node.js 20+
-- pnpm for `../moodboard-designer`
-- an Obsidian desktop install
-- a Firebase project configured for the Kadima auth flow
-- localhost or `127.0.0.1` added to Firebase Auth authorized domains
-
 ## Build And Add The Plugin To Obsidian
 
 1. In this repo, install dependencies:

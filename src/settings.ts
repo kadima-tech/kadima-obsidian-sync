@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { IS_DEV_BUILD } from "./constants";
 import type KadimaSyncPlugin from "./main";
 
 export class KadimaSyncSettingTab extends PluginSettingTab {
@@ -39,20 +40,22 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(containerEl)
-      .setName("API base URL")
-      .setDesc("The Kadima deployment to use for centralized auth and sync APIs.")
-      .addText((text) =>
-        text
-          .setPlaceholder("https://www.kadima-tech.com")
-          .setValue(this.plugin.store.settings.apiBaseUrl)
-          .onChange(async (value) => {
-            this.plugin.store.updateSettings({
-              apiBaseUrl: value.trim() || "https://www.kadima-tech.com"
-            });
-            await this.plugin.store.flush();
-          })
-      );
+    if (IS_DEV_BUILD) {
+      new Setting(containerEl)
+        .setName("API base URL")
+        .setDesc("The Kadima deployment to use for centralized auth and sync APIs.")
+        .addText((text) =>
+          text
+            .setPlaceholder("https://www.kadima-tech.com")
+            .setValue(this.plugin.store.settings.apiBaseUrl)
+            .onChange(async (value) => {
+              this.plugin.store.updateSettings({
+                apiBaseUrl: value.trim() || "https://www.kadima-tech.com"
+              });
+              await this.plugin.store.flush();
+            })
+        );
+    }
 
     new Setting(containerEl)
       .setName("Sync on launch")
@@ -87,21 +90,23 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName("Auto-sync interval")
-      .setDesc("How often the plugin polls Kadima for remote changes.")
-      .addText((text) =>
-        text
-          .setValue(String(this.plugin.store.settings.autoSyncIntervalSeconds))
-          .onChange(async (value) => {
-            const parsed = Number.parseInt(value, 10);
-            if (Number.isFinite(parsed) && parsed >= 10) {
-              await this.plugin.updateSettings({
-                autoSyncIntervalSeconds: parsed
-              });
-            }
-          })
-      );
+    if (IS_DEV_BUILD) {
+      new Setting(containerEl)
+        .setName("Auto-sync interval")
+        .setDesc("How often the plugin polls Kadima for remote changes.")
+        .addText((text) =>
+          text
+            .setValue(String(this.plugin.store.settings.autoSyncIntervalSeconds))
+            .onChange(async (value) => {
+              const parsed = Number.parseInt(value, 10);
+              if (Number.isFinite(parsed) && parsed >= 10) {
+                await this.plugin.updateSettings({
+                  autoSyncIntervalSeconds: parsed
+                });
+              }
+            })
+        );
+    }
 
     new Setting(containerEl)
       .setName("Conflict folder")
@@ -116,21 +121,23 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName("Inline payload limit")
-      .setDesc("Files larger than this will require signed upload/download support.")
-      .addText((text) =>
-        text
-          .setValue(String(this.plugin.store.settings.maxInlineBytes))
-          .onChange(async (value) => {
-            const parsed = Number.parseInt(value, 10);
-            if (Number.isFinite(parsed) && parsed > 0) {
-              await this.plugin.updateSettings({
-                maxInlineBytes: parsed
-              });
-            }
-          })
-      );
+    if (IS_DEV_BUILD) {
+      new Setting(containerEl)
+        .setName("Inline payload limit")
+        .setDesc("Files larger than this will require signed upload/download support.")
+        .addText((text) =>
+          text
+            .setValue(String(this.plugin.store.settings.maxInlineBytes))
+            .onChange(async (value) => {
+              const parsed = Number.parseInt(value, 10);
+              if (Number.isFinite(parsed) && parsed > 0) {
+                await this.plugin.updateSettings({
+                  maxInlineBytes: parsed
+                });
+              }
+            })
+        );
+    }
 
     const note = containerEl.createDiv({ cls: "kadima-sync-setting-note" });
     note.setText(

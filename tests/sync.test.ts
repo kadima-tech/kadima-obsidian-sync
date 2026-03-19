@@ -70,6 +70,7 @@ describe('KadimaSyncEngine Integration', () => {
             accessToken: 'valid-token',
             refreshToken: 'refresh-token',
             expiresAt: Date.now() + 3600000,
+            vaultId: 'v-123',
             connectedAt: Date.now(),
             user: { uid: 'user-1', email: 'test@example.com' }
         });
@@ -93,8 +94,10 @@ describe('KadimaSyncEngine Integration', () => {
     });
 
     it('should bootstrap successfully and pull remote files', async () => {
+        let bootstrapBody: any = null;
         server.use(
-            http.post(`${API_BASE}/api/obsidian/sync/bootstrap`, () => {
+            http.post(`${API_BASE}/api/obsidian/sync/bootstrap`, async ({ request }) => {
+                bootstrapBody = await request.json();
                 return HttpResponse.json({
                     vaultId: 'v-123',
                     cursor: 'c-1',
@@ -116,6 +119,7 @@ describe('KadimaSyncEngine Integration', () => {
 
         expect(store.sync.lastSyncError).toBeUndefined();
         expect(store.sync.vaultId).toBe('v-123');
+        expect(bootstrapBody.vaultId).toBe('v-123');
         expect(app.vault.getAbstractFileByPath('remote-file.md')).not.toBeNull();
         expect(await app.vault.read(app.vault.getAbstractFileByPath('remote-file.md') as any)).toBe('Hello from remote');
     });
@@ -158,6 +162,37 @@ describe('KadimaSyncEngine Integration', () => {
         expect(receivedPush.changes[0].path).toBe('notified-file.md');
         expect(store.sync.pendingMutations).toHaveLength(0);
         expect(store.getFileState('notified-file.md')?.lastSyncedRevision).toBe('rev-push-1');
+    });
+
+    it('should ignore stale local sync state and bootstrap using the selected auth vault', async () => {
+        store.setVaultId('stale-local-vault');
+        store.setCursor('c-stale');
+        store.setAuth({
+            ...(store.auth!),
+            vaultId: 'v-fresh'
+        });
+
+        let bootstrapBody: any = null;
+        server.use(
+            http.post(`${API_BASE}/api/obsidian/sync/bootstrap`, async ({ request }) => {
+                bootstrapBody = await request.json();
+                return HttpResponse.json({
+                    vaultId: 'v-fresh',
+                    cursor: 'c-fresh',
+                    entries: []
+                });
+            }),
+            http.post(`${API_BASE}/api/obsidian/sync/pull`, () => {
+                return HttpResponse.json({ cursor: 'c-fresh', hasMore: false, changes: [] });
+            })
+        );
+
+        await engine.syncNow('manual');
+
+        expect(bootstrapBody.vaultId).toBe('v-fresh');
+        expect(store.sync.vaultId).toBe('v-fresh');
+        expect(store.sync.cursor).toBe('c-fresh');
+        expect(store.sync.lastSyncError).toBeUndefined();
     });
 
     it('should handle remote deletions', async () => {

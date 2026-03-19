@@ -4,6 +4,10 @@ export const PLUGIN_ID = "kadima-sync";
 export const PLUGIN_NAME = "Kadima Sync";
 export const DEFAULT_STATUS = "Idle";
 
+declare const __DEV__: boolean;
+
+export const IS_DEV_BUILD = __DEV__;
+
 export const DEFAULT_SETTINGS: KadimaSyncSettings = {
   apiBaseUrl: "https://www.kadima-tech.com",
   autoSyncIntervalSeconds: 30,

@@ -1,5 +1,4 @@
 import type { App } from "obsidian";
-import { sleep } from "./utils";
 import { PluginStore } from "./store";
 import { KadimaApiClient } from "./api";
 import type { AuthSession, KadimaSyncSettings } from "./types";
@@ -40,11 +39,9 @@ export class KadimaAuthService {
     window.open(session.approvalUrl, "_blank", "noopener,noreferrer");
     this.setStatus("Waiting for Kadima approval");
 
-    const timeoutMs = session.expiresAt - Date.now();
-    const status = await this.api.waitForAuthSession(
+    const status = await this.api.streamAuthSession(
       session.sessionId,
       session.pollToken,
-      timeoutMs
     );
 
     if (status.status === "expired") {
@@ -56,6 +53,8 @@ export class KadimaAuthService {
         ...status.auth,
         connectedAt: Date.now()
       };
+      this.store.resetSyncState();
+      this.store.setVaultId(auth.vaultId);
       this.store.setAuth(auth);
       this.setStatus(`Connected as ${auth.user.email ?? auth.user.uid}`);
       return auth;
@@ -89,6 +88,7 @@ export class KadimaAuthService {
       accessToken: refreshed.accessToken,
       refreshToken: refreshed.refreshToken ?? session.refreshToken,
       expiresAt: refreshed.expiresAt,
+      vaultId: refreshed.vaultId,
       capabilities: refreshed.capabilities ?? session.capabilities
     });
     return refreshed.accessToken;
@@ -105,6 +105,7 @@ export class KadimaAuthService {
     }
 
     this.store.setAuth(null);
+    this.store.resetSyncState();
     this.setStatus("Disconnected");
   }
 }
