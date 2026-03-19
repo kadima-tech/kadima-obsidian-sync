@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
 import { IS_DEV_BUILD } from "./constants";
 import type KadimaSyncPlugin from "./main";
 
@@ -12,7 +12,8 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
     const snapshot = this.plugin.store.snapshot();
 
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Kadima Sync" });
+
+    new Setting(containerEl).setName("Kadima Sync").setHeading();
 
     new Setting(containerEl)
       .setName("Connection")
@@ -116,7 +117,9 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
           .setValue(this.plugin.store.settings.conflictFolder)
           .onChange(async (value) => {
             await this.plugin.updateSettings({
-              conflictFolder: value.trim() || ".kadima-conflicts"
+              conflictFolder: normalizePath(
+                value.trim() || ".kadima-conflicts"
+              )
             });
           })
       );

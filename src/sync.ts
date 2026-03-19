@@ -147,7 +147,7 @@ export class KadimaSyncEngine {
       return;
     }
 
-    if (!shouldSyncPath(file.path, this.getSettings().syncHiddenFiles)) {
+    if (!shouldSyncPath(file.path, this.getSettings().syncHiddenFiles, this.app.vault.configDir)) {
       return;
     }
 
@@ -170,7 +170,7 @@ export class KadimaSyncEngine {
     }
 
     const path = normalizePath(file.path);
-    if (!shouldSyncPath(path, this.getSettings().syncHiddenFiles)) {
+    if (!shouldSyncPath(path, this.getSettings().syncHiddenFiles, this.app.vault.configDir)) {
       return;
     }
 
@@ -192,7 +192,7 @@ export class KadimaSyncEngine {
       return;
     }
 
-    if (!shouldSyncPath(file.path, this.getSettings().syncHiddenFiles)) {
+    if (!shouldSyncPath(file.path, this.getSettings().syncHiddenFiles, this.app.vault.configDir)) {
       return;
     }
 
@@ -337,7 +337,7 @@ export class KadimaSyncEngine {
         continue;
       }
 
-      if (!shouldSyncPath(entry.path, this.getSettings().syncHiddenFiles)) {
+      if (!shouldSyncPath(entry.path, this.getSettings().syncHiddenFiles, this.app.vault.configDir)) {
         continue;
       }
 
@@ -472,7 +472,7 @@ export class KadimaSyncEngine {
       console.warn("[KadimaSync] Skipping remote mutation with empty path", mutation);
       return;
     }
-    if (!shouldSyncPath(mutation.path, this.getSettings().syncHiddenFiles)) {
+    if (!shouldSyncPath(mutation.path, this.getSettings().syncHiddenFiles, this.app.vault.configDir)) {
       return;
     }
 
@@ -599,7 +599,11 @@ export class KadimaSyncEngine {
     if (mutation.deleted) {
       if (existing instanceof TFile) {
         await this.withSuppressedEvents(async () => {
-          await this.app.vault.delete(existing, true);
+          if (typeof this.app.fileManager?.trashFile === "function") {
+            await this.app.fileManager.trashFile(existing);
+          } else {
+            await this.app.vault.delete(existing, true);
+          }
         });
       }
       this.store.upsertFileState(mutation.path, {
@@ -697,7 +701,11 @@ export class KadimaSyncEngine {
     if (kind === "text") {
       const text = typeof payload === "string" ? payload : new TextDecoder().decode(payload);
       if (current instanceof TFile) {
-        await this.app.vault.modify(current, text);
+        if (typeof this.app.vault.process === "function") {
+          await this.app.vault.process(current, () => text);
+        } else {
+          await this.app.vault.modify(current, text);
+        }
       } else {
         await this.app.vault.create(path, text);
       }

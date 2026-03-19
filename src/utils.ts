@@ -48,9 +48,14 @@ export function inferFileKind(path: string): FileKind {
   return BINARY_EXTENSIONS.has(extension) ? "binary" : "text";
 }
 
-export function shouldSyncPath(path: string, syncHiddenFiles: boolean): boolean {
+export function shouldSyncPath(
+  path: string,
+  syncHiddenFiles: boolean,
+  configDir = ".obsidian"
+): boolean {
   const normalized = normalizeVaultPath(path);
-  if (normalized.startsWith(`.obsidian/plugins/${PLUGIN_ID}/`)) {
+  const pluginDataPrefix = normalizeVaultPath(`${configDir}/plugins/${PLUGIN_ID}/`);
+  if (normalized.startsWith(pluginDataPrefix)) {
     return false;
   }
 

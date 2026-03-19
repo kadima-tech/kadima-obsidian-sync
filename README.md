@@ -1,116 +1,56 @@
-# Kadima Sync for Obsidian
+# Kadima Sync
 
-Kadima Sync is a custom Obsidian plugin that syncs a vault through Kadima's centralized API available for all paid subscriptions to the Kadima ecosystem, including Draggen and Talebuddy.
+Kadima Sync connects an Obsidian vault to Kadima and keeps notes and files in sync across devices through Kadima's hosted sync service.
 
-## What It Does
+## Features
 
-- connects an Obsidian vault to a Kadima account with a browser approval flow
-- syncs notes and larger vault files through centralized HTTP endpoints
-- keeps local edits local-first and pushes/pulls changes using per-file revisions
-- preserves conflicted changes as extra files instead of silently overwriting them
+- Connect an Obsidian vault to a Kadima account with a browser approval flow
+- Sync notes and larger vault files through Kadima's sync API
+- Keep local edits local-first and synchronize changes with per-file revisions
+- Preserve conflicts as separate files instead of silently overwriting local work
+- Support create, edit, rename, and delete operations
 
-## Current Scope
+## Installation
 
-Implemented now:
+### Community Plugins
 
-- Kadima pairing flow with short-lived access tokens and long-lived refresh tokens
-- centralized bootstrap, pull, and push endpoints
-- signed large-file upload/download flow through bucket-backed blobs
-- text files and other inline payloads up to the configured limit
-- create, modify, delete, and rename handling
-- conflict preservation into `.kadima-conflicts`
+Once the plugin is approved, install `Kadima Sync` from `Settings -> Community plugins`.
 
-Not implemented yet:
+### Manual Installation
 
-- stable vault identity independent of vault name
-- dashboard UI for managing approved devices
+1. Download the latest release assets.
+2. Create the folder `<vault>/.obsidian/plugins/kadima-sync/`.
+3. Copy `manifest.json`, `main.js`, and `styles.css` into that folder.
+4. In Obsidian, open `Settings -> Community plugins` and enable `Kadima Sync`.
 
-## Build And Add The Plugin To Obsidian
+## Usage
 
-1. In this repo, install dependencies:
+1. Open `Settings -> Kadima Sync`.
+2. Click `Connect Kadima`.
+3. Complete the approval flow in your browser.
+4. Return to Obsidian and run `Sync now`.
+
+Conflicted local changes are preserved in `.kadima-conflicts` by default.
+
+## Disclosures
+
+- Requires a Kadima account and an active paid Kadima subscription.
+- Requires network access to Kadima services for authentication and synchronization.
+- Opens an external browser window or tab during account connection.
+- Stores Kadima authentication tokens and sync state in Obsidian's local plugin data on the device.
+- Syncs vault content to Kadima's hosted service. Hidden files are excluded by default, but users can enable syncing hidden files, which may include vault configuration content.
+- Does not include ads or client-side telemetry.
+- Source code is available in this repository.
+
+## Development
 
 ```bash
 npm install
-```
-
-2. Build the plugin:
-
-```bash
 npm run build
 ```
 
-3. Copy it into an Obsidian vault plugin folder.
-
-Automatic:
-
-```bash
-npm run install:obsidian -- "/absolute/path/to/YourVault"
-```
-
-Or build and copy in one step with an env var:
-
-```bash
-OBSIDIAN_VAULT_PATH="/absolute/path/to/YourVault" npm run build
-```
-
-For watch mode during development:
+For local development:
 
 ```bash
 OBSIDIAN_VAULT_PATH="/absolute/path/to/YourVault" npm run dev
-```
-
-That copies `manifest.json`, `main.js`, `styles.css`, and `versions.json` into:
-
-```text
-<Vault>/.obsidian/plugins/kadima-sync
-```
-
-4. In Obsidian:
-   Open the target vault.
-   Go to `Settings -> Community plugins`.
-   If needed, turn off restricted mode.
-   Enable `Kadima Sync`.
-
-## Configure The Plugin For Local Testing
-
-In the plugin settings:
-
-- set `API base URL` to the exact local `kadima-landing` origin, for example
-  `http://127.0.0.1:3000` or `http://127.0.0.1:3001`
-- click `Connect Kadima`
-- complete the Kadima approval flow in the browser
-
-The centralized backend will create the pairing session locally and use your configured Firebase dev project for auth and Firestore persistence.
-
-## Local Sync Smoke Test
-
-The easiest test is with two separate local vaults using the same Kadima account.
-
-1. Create two Obsidian vaults, for example `Sync Test A` and `Sync Test B`.
-2. Install this plugin into both vaults.
-3. Point both plugin instances to `http://127.0.0.1:3000`.
-4. Connect both vaults with the same Kadima account.
-5. In vault A, create or edit a note and run `Sync now`.
-6. In vault B, run `Sync now` and verify the note appears.
-7. Repeat with:
-   rename in A, then sync B
-   delete in A, then sync B
-   simultaneous edits in both vaults to force a conflict
-
-Expected conflict behavior:
-
-- the winning revision is applied to the original path
-- the non-winning local version is preserved under `.kadima-conflicts`
-
-## Useful Commands
-
-```bash
-# Build plugin
-npm run build
-
-# Watch plugin and copy to an Obsidian vault on each rebuild
-OBSIDIAN_VAULT_PATH="/absolute/path/to/YourVault" npm run dev
-
-# Copy an existing build to a vault
-npm run install:obsidian -- "/absolute/path/to/YourVault"
 ```

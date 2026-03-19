@@ -10,4 +10,7 @@ export default defineConfig({
     },
     globals: true,
   },
+  define: {
+    '__DEV__': true,
+  },
 });
