@@ -1,5 +1,5 @@
 import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
-import { IS_DEV_BUILD } from "./constants";
+import { IS_DEV_BUILD, REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
 import type KadimaSyncPlugin from "./main";
 
 export class KadimaSyncSettingTab extends PluginSettingTab {
@@ -15,13 +15,13 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName("Kadima Sync").setHeading();
 
-    new Setting(containerEl)
+    containerEl.createDiv({ cls: "kadima-sync-setting-note" }).setText(
+      "Kadima Sync is per Obsidian vault. Open another vault and connect it there; it will not replace this one.",
+    );
+
+    const connection = new Setting(containerEl)
       .setName("Connection")
-      .setDesc(
-        snapshot.auth
-          ? `Connected as ${this.plugin.auth.connectionLabel()}`
-          : "Connect this vault to your Kadima account."
-      )
+      .setDesc(this.plugin.auth.connectionDescription())
       .addButton((button) =>
         button
           .setButtonText(snapshot.auth ? "Disconnect" : "Connect Kadima")
@@ -33,13 +33,29 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
             }
             this.display();
           })
-      )
-      .addButton((button) =>
-        button.setButtonText("Sync now").onClick(async () => {
-          await this.plugin.syncNow();
-          this.display();
-        })
       );
+
+    if (snapshot.auth) {
+      connection.addButton((button) =>
+        button.setButtonText("Re-pair").onClick(async () => {
+          const confirmed = window.confirm(
+            "Re-pair this vault with Kadima? The current connection stays active until the new pairing is approved.",
+          );
+          if (!confirmed) {
+            return;
+          }
+          await this.plugin.connectAccount();
+          this.display();
+        }),
+      );
+    }
+
+    connection.addButton((button) =>
+      button.setButtonText("Sync now").onClick(async () => {
+        await this.plugin.syncNow();
+        this.display();
+      }),
+    );
 
     if (IS_DEV_BUILD) {
       new Setting(containerEl)
@@ -149,7 +165,10 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
         : "No sync has completed yet."
     );
 
-    if (snapshot.sync.lastSyncError) {
+    if (
+      snapshot.sync.lastSyncError &&
+      snapshot.sync.lastSyncError !== REMOTE_VAULT_REMOVED_MESSAGE
+    ) {
       const error = containerEl.createDiv({ cls: "kadima-sync-setting-note" });
       error.setText(`Last error: ${snapshot.sync.lastSyncError}`);
     }

@@ -124,6 +124,21 @@ describe('KadimaSyncEngine Integration', () => {
         expect(await app.vault.read(app.vault.getAbstractFileByPath('remote-file.md') as any)).toBe('Hello from remote');
     });
 
+    it('treats a 404 Vault not found as disconnected without keeping a connected row', async () => {
+        server.use(
+            http.post(`${API_BASE}/api/obsidian/sync/bootstrap`, () => {
+                return HttpResponse.json({ error: 'Vault not found' }, { status: 404 });
+            })
+        );
+
+        await engine.syncNow('launch');
+
+        expect(store.auth).toBeNull();
+        expect(store.sync.lastSyncError).toBe('This vault was removed from Kadima');
+        expect(auth.isConnected()).toBe(false);
+        expect(auth.connectionDescription()).toBe('This vault was removed from Kadima');
+    });
+
     it('should push local changes to the server', async () => {
         store.setVaultId('v-123');
         store.setCursor('c-1');
