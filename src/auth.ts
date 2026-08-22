@@ -1,6 +1,7 @@
 import type { App } from "obsidian";
 import { PluginStore } from "./store";
 import { KadimaApiClient } from "./api";
+import { REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
 import type { AuthSession, KadimaSyncSettings } from "./types";
 
 export class KadimaAuthService {
@@ -29,7 +30,27 @@ export class KadimaAuthService {
     return session.user.email ?? session.user.displayName ?? session.user.uid;
   }
 
+  connectionDescription(): string {
+    const session = this.store.auth;
+    if (!session) {
+      if (this.store.sync.lastSyncError === REMOTE_VAULT_REMOVED_MESSAGE) {
+        return REMOTE_VAULT_REMOVED_MESSAGE;
+      }
+      return "Connect this vault to your Kadima account.";
+    }
+    return `Connected as ${this.connectionLabel()} · ${this.app.vault.getName()}`;
+  }
+
+  markRemoteRemoved(): void {
+    this.store.setAuth(null);
+    this.store.resetSyncState();
+    this.store.setLastSyncError(REMOTE_VAULT_REMOVED_MESSAGE);
+    this.setStatus(REMOTE_VAULT_REMOVED_MESSAGE);
+  }
+
   async connect(): Promise<AuthSession> {
+    const previousRefreshToken = this.store.auth?.refreshToken ?? null;
+
     const session = await this.api.createAuthSession({
       vaultName: this.app.vault.getName(),
       pluginVersion: this.pluginVersion,
@@ -56,6 +77,13 @@ export class KadimaAuthService {
       this.store.resetSyncState();
       this.store.setVaultId(auth.vaultId);
       this.store.setAuth(auth);
+      if (previousRefreshToken && previousRefreshToken !== auth.refreshToken) {
+        try {
+          await this.api.revokeAuthSession(previousRefreshToken);
+        } catch (error) {
+          console.warn("[KadimaSync] Failed to revoke previous refresh token:", error);
+        }
+      }
       this.setStatus(`Connected as ${auth.user.email ?? auth.user.uid}`);
       return auth;
     }

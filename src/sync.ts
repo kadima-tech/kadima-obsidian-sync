@@ -1,5 +1,6 @@
 import { Notice, TAbstractFile, TFile, normalizePath, type App, type Plugin } from "obsidian";
 import { ApiError, KadimaApiClient } from "./api";
+import { REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
 import { decideConflict } from "./conflicts";
 import { PluginStore } from "./store";
 import { isBlobPayload, isInlinePayload } from "./types";
@@ -123,6 +124,13 @@ export class KadimaSyncEngine {
         new Notice("Kadima sync complete.");
       }
     } catch (error) {
+      if (isRemoteVaultRemovedError(error)) {
+        this.auth.markRemoteRemoved();
+        if (reason === "manual") {
+          new Notice(REMOTE_VAULT_REMOVED_MESSAGE);
+        }
+        return;
+      }
       const message =
         error instanceof Error ? error.message : "Unknown sync error";
       this.store.setLastSyncError(message);
@@ -745,4 +753,12 @@ export class KadimaSyncEngine {
       this.suppressLocalEvents = false;
     }
   }
+}
+
+function isRemoteVaultRemovedError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status === 404 &&
+    /vault not found/i.test(error.message)
+  );
 }

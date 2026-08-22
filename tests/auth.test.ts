@@ -170,4 +170,122 @@ describe('KadimaAuthService', () => {
         expect(token).toBe('new-at');
         expect(store.auth?.accessToken).toBe('new-at');
     });
+
+    it('keeps the previous session until re-pair is approved, then revokes it', async () => {
+        store.setAuth({
+            accessToken: 'old-at',
+            refreshToken: 'old-rt',
+            expiresAt: Date.now() + 3600000,
+            vaultId: 'vault-1',
+            connectedAt: Date.now(),
+            user: { uid: 'u-1', email: 'old@example.com' }
+        });
+
+        let revoked: string | undefined;
+        server.use(
+            http.post(`${API_BASE}/api/obsidian/auth/sessions`, () => {
+                return HttpResponse.json({
+                    sessionId: 's-repair',
+                    pollToken: 'p-repair',
+                    approvalUrl: 'https://kadima.ai/approve',
+                    pollIntervalMs: 10,
+                    expiresAt: Date.now() + 60000
+                });
+            }),
+            http.get(`${API_BASE}/api/obsidian/auth/sessions/s-repair`, () => {
+                const encoder = new TextEncoder();
+                const stream = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(encoder.encode(
+                            `event: approved\ndata: ${JSON.stringify({
+                                auth: {
+                                    accessToken: 'new-at',
+                                    refreshToken: 'new-rt',
+                                    expiresAt: Date.now() + 3600000,
+                                    vaultId: 'vault-1',
+                                    user: { uid: 'u-1', email: 'new@example.com' }
+                                }
+                            })}\n\n`
+                        ));
+                        controller.close();
+                    }
+                });
+                return new HttpResponse(stream, {
+                    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
+                });
+            }),
+            http.post(`${API_BASE}/api/obsidian/auth/revoke`, async ({ request }) => {
+                const body = await request.json() as { refreshToken?: string };
+                revoked = body.refreshToken;
+                return HttpResponse.json({ success: true });
+            })
+        );
+
+        vi.spyOn(window, 'open').mockImplementation(() => null);
+
+        const session = await auth.connect();
+        expect(session.refreshToken).toBe('new-rt');
+        expect(store.auth?.refreshToken).toBe('new-rt');
+        expect(revoked).toBe('old-rt');
+    });
+
+    it('leaves the previous session in place if re-pair is cancelled', async () => {
+        store.setAuth({
+            accessToken: 'old-at',
+            refreshToken: 'old-rt',
+            expiresAt: Date.now() + 3600000,
+            vaultId: 'vault-1',
+            connectedAt: Date.now(),
+            user: { uid: 'u-1', email: 'old@example.com' }
+        });
+
+        let revoked = false;
+        server.use(
+            http.post(`${API_BASE}/api/obsidian/auth/sessions`, () => {
+                return HttpResponse.json({
+                    sessionId: 's-cancel',
+                    pollToken: 'p-cancel',
+                    approvalUrl: 'https://kadima.ai/approve',
+                    pollIntervalMs: 10,
+                    expiresAt: Date.now() + 60000
+                });
+            }),
+            http.get(`${API_BASE}/api/obsidian/auth/sessions/s-cancel`, () => {
+                const encoder = new TextEncoder();
+                const stream = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(encoder.encode('event: expired\ndata: {}\n\n'));
+                        controller.close();
+                    }
+                });
+                return new HttpResponse(stream, {
+                    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
+                });
+            }),
+            http.post(`${API_BASE}/api/obsidian/auth/revoke`, () => {
+                revoked = true;
+                return HttpResponse.json({ success: true });
+            })
+        );
+
+        vi.spyOn(window, 'open').mockImplementation(() => null);
+
+        await expect(auth.connect()).rejects.toThrow(/expired/i);
+        expect(store.auth?.refreshToken).toBe('old-rt');
+        expect(revoked).toBe(false);
+    });
+
+    it('describes a connected vault with the local vault name', () => {
+        store.setAuth({
+            accessToken: 'at',
+            refreshToken: 'rt',
+            expiresAt: Date.now() + 3600000,
+            vaultId: 'vault-1',
+            connectedAt: Date.now(),
+            user: { uid: 'u-1', email: 'writer@example.com' }
+        });
+        expect(auth.connectionDescription()).toBe(
+            'Connected as writer@example.com · Test Vault'
+        );
+    });
 });
