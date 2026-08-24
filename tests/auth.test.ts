@@ -1,11 +1,33 @@
 import { expect, it, describe, beforeEach, vi } from 'vitest';
-import { KadimaAuthService } from '../src/auth';
+import { KadimaAuthService, pairingApprovalUrl } from '../src/auth';
 import { FakeApp } from './mocks/obsidian';
 import { PluginStore } from '../src/store';
 import { KadimaApiClient } from '../src/api';
 import { http, HttpResponse } from 'msw';
 import { server } from './setup';
 import { DEFAULT_SETTINGS } from '../src/constants';
+
+describe('pairingApprovalUrl', () => {
+    it('rewrites a Cloud Run bind address onto the configured API host', () => {
+        expect(
+            pairingApprovalUrl(
+                'https://www.kadima-tech.com',
+                'obs-abc',
+                'https://0.0.0.0:8080/obsidian/connect?sessionId=obs-abc',
+            ),
+        ).toBe('https://www.kadima-tech.com/obsidian/connect?sessionId=obs-abc');
+    });
+
+    it('keeps a usable server URL', () => {
+        expect(
+            pairingApprovalUrl(
+                'https://www.kadima-tech.com',
+                'obs-abc',
+                'https://kadima-tech.com/obsidian/connect?sessionId=obs-abc',
+            ),
+        ).toBe('https://kadima-tech.com/obsidian/connect?sessionId=obs-abc');
+    });
+});
 
 describe('KadimaAuthService', () => {
     let app: FakeApp;
@@ -94,6 +116,50 @@ describe('KadimaAuthService', () => {
         expect(store.auth?.accessToken).toBe('at-1');
         expect(store.auth?.vaultId).toBe('vault-1');
         expect(openSpy).toHaveBeenCalledWith('https://kadima.ai/approve', '_blank', expect.any(String));
+    });
+
+    it('opens the API host when the server returns a container bind address', async () => {
+        server.use(
+            http.post(`${API_BASE}/api/obsidian/auth/sessions`, () => {
+                return HttpResponse.json({
+                    sessionId: 's-bind',
+                    pollToken: 'p-bind',
+                    approvalUrl: 'https://0.0.0.0:8080/obsidian/connect?sessionId=s-bind',
+                    pollIntervalMs: 10,
+                    expiresAt: Date.now() + 60000
+                });
+            }),
+            http.get(`${API_BASE}/api/obsidian/auth/sessions/s-bind`, () => {
+                const encoder = new TextEncoder();
+                const stream = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(encoder.encode(
+                            `event: approved\ndata: ${JSON.stringify({
+                                auth: {
+                                    accessToken: 'at-bind',
+                                    refreshToken: 'rt-bind',
+                                    expiresAt: Date.now() + 3600000,
+                                    vaultId: 'vault-bind',
+                                    user: { uid: 'u-bind', email: 'bind@example.com' }
+                                }
+                            })}\n\n`
+                        ));
+                        controller.close();
+                    }
+                });
+                return new HttpResponse(stream, {
+                    headers: { 'Content-Type': 'text/event-stream' }
+                });
+            })
+        );
+
+        const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+        await auth.connect();
+        expect(openSpy).toHaveBeenCalledWith(
+            `${API_BASE}/obsidian/connect?sessionId=s-bind`,
+            '_blank',
+            expect.any(String),
+        );
     });
 
     it('should connect when both SSE events arrive in a single chunk', async () => {
