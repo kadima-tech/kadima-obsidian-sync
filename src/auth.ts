@@ -17,7 +17,12 @@ export function pairingApprovalUrl(
   if (!serverApprovalUrl) return fromApi;
   try {
     const url = new URL(serverApprovalUrl);
-    if (url.hostname === "0.0.0.0" || url.hostname === "::" || url.hostname === "[::]") {
+    if (
+      url.hostname === "0.0.0.0" ||
+      url.hostname === "::" ||
+      url.hostname === "[::]" ||
+      url.hostname.endsWith(".run.app")
+    ) {
       return fromApi;
     }
   } catch {

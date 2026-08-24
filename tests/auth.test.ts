@@ -18,6 +18,16 @@ describe('pairingApprovalUrl', () => {
         ).toBe('https://www.kadima-tech.com/obsidian/connect?sessionId=obs-abc');
     });
 
+    it('rewrites a Cloud Run default hostname onto the configured API host', () => {
+        expect(
+            pairingApprovalUrl(
+                'https://www.kadima-tech.com',
+                'obs-abc',
+                'https://kadima-landing-vkjdaeq5uq-ew.a.run.app/obsidian/connect?sessionId=obs-abc',
+            ),
+        ).toBe('https://www.kadima-tech.com/obsidian/connect?sessionId=obs-abc');
+    });
+
     it('keeps a usable server URL', () => {
         expect(
             pairingApprovalUrl(
