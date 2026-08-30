@@ -4,6 +4,34 @@ import { KadimaApiClient } from "./api";
 import { REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
 import type { AuthSession, KadimaSyncSettings } from "./types";
 
+/**
+ * Browser URL for the pairing page. Prefer the API host this plugin is
+ * configured with when the server returned a container bind address
+ * (`0.0.0.0:8080` on Cloud Run).
+ */
+export function pairingApprovalUrl(
+  apiBaseUrl: string,
+  sessionId: string,
+  serverApprovalUrl?: string,
+): string {
+  const fromApi = `${apiBaseUrl.replace(/\/+$/, "")}/obsidian/connect?sessionId=${encodeURIComponent(sessionId)}`;
+  if (!serverApprovalUrl) return fromApi;
+  try {
+    const url = new URL(serverApprovalUrl);
+    if (
+      url.hostname === "0.0.0.0" ||
+      url.hostname === "::" ||
+      url.hostname === "[::]" ||
+      url.hostname.endsWith(".run.app")
+    ) {
+      return fromApi;
+    }
+  } catch {
+    return fromApi;
+  }
+  return serverApprovalUrl;
+}
+
 export class KadimaAuthService {
   constructor(
     private readonly app: App,
@@ -57,7 +85,15 @@ export class KadimaAuthService {
       platform: /Mobile/i.test(window.navigator.userAgent) ? "mobile" : "desktop"
     });
 
-    window.open(session.approvalUrl, "_blank", "noopener,noreferrer");
+    // Open the connect page on the API host the plugin is talking to. The
+    // server used to return request.nextUrl.origin, which on Cloud Run is
+    // https://0.0.0.0:8080 — a URL no browser can load as Kadima.
+    const approvalUrl = pairingApprovalUrl(
+      this.getSettings().apiBaseUrl,
+      session.sessionId,
+      session.approvalUrl,
+    );
+    window.open(approvalUrl, "_blank", "noopener,noreferrer");
     this.setStatus("Waiting for Kadima approval");
 
     const status = await this.api.streamAuthSession(
