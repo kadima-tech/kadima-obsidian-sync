@@ -24,6 +24,7 @@ describe('Conflict Resolution Edge Cases', () => {
             loadData: vi.fn().mockResolvedValue({}),
             saveData: vi.fn(),
             registerEvent: vi.fn(),
+            registerInterval: vi.fn((id: number) => id),
         };
         store = new PluginStore(plugin);
         await store.load();

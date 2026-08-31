@@ -62,7 +62,6 @@ export class KadimaApiClient {
       method: "GET",
       headers: { Accept: "text/event-stream" },
       throw: false,
-      // timeout: 11 * 60 * 1000, // 11 min — session TTL is 10 min
     });
 
     if (response.status >= 400) {
@@ -227,16 +226,9 @@ export class KadimaApiClient {
       auth?: boolean;
       body?: unknown;
       headers?: Record<string, string>;
-      timeout?: number;
     } = {},
   ): Promise<T> {
-    const {
-      method = "GET",
-      auth = false,
-      body,
-      headers = {},
-      timeout,
-    } = options;
+    const { method = "GET", auth = false, body, headers = {} } = options;
     const url = joinUrl(this.getSettings().apiBaseUrl, path);
     const requestHeaders: Record<string, string> = {
       ...headers,
@@ -260,8 +252,7 @@ export class KadimaApiClient {
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
       throw: false,
-      timeout: timeout,
-    } as any);
+    });
 
     if (response.status >= 400) {
       const payload = response.json ?? response.text;

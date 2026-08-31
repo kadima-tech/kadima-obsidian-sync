@@ -1,5 +1,6 @@
 import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
 import { IS_DEV_BUILD, REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
+import { confirmAction } from "./modals";
 import type KadimaSyncPlugin from "./main";
 
 export class KadimaSyncSettingTab extends PluginSettingTab {
@@ -12,8 +13,6 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
     const snapshot = this.plugin.store.snapshot();
 
     containerEl.empty();
-
-    new Setting(containerEl).setName("Kadima Sync").setHeading();
 
     containerEl.createDiv({ cls: "kadima-sync-setting-note" }).setText(
       "Kadima Sync is per Obsidian vault. Open another vault and connect it there; it will not replace this one.",
@@ -38,9 +37,12 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
     if (snapshot.auth) {
       connection.addButton((button) =>
         button.setButtonText("Re-pair").onClick(async () => {
-          const confirmed = window.confirm(
-            "Re-pair this vault with Kadima? The current connection stays active until the new pairing is approved.",
-          );
+          const confirmed = await confirmAction(this.app, {
+            title: "Re-pair this vault?",
+            message:
+              "The current connection stays active until the new pairing is approved.",
+            confirmText: "Re-pair",
+          });
           if (!confirmed) {
             return;
           }
