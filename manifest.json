@@ -3,7 +3,8 @@
   "name": "Kadima Sync",
   "version": "0.2.0",
   "minAppVersion": "1.6.0",
-  "description": "One-click Kadima sync for Obsidian.",
+  "description": "Sync your vault with your Kadima account across devices, and browse it from Draggen and Talebuddy.",
   "author": "Kadima",
+  "authorUrl": "https://www.kadima-tech.com",
   "isDesktopOnly": false
 }
