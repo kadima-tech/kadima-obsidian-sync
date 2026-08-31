@@ -36,6 +36,7 @@ export class TFolder extends TAbstractFile {
 }
 
 export class FakeVault extends EventEmitter {
+  public configDir = ".obsidian";
   private files = new Map<string, string | ArrayBuffer>();
   private abstractFiles = new Map<string, TAbstractFile>();
 
@@ -171,12 +172,18 @@ export class FakeVault extends EventEmitter {
 
 export class FakeApp {
   public vault: FakeVault;
+  public fileManager: { trashFile: (file: TFile) => Promise<void> };
   public workspace = {
     onLayoutReady: (cb: () => void) => setTimeout(cb, 0)
   };
 
   constructor(vaultName: string = "Test Vault") {
     this.vault = new FakeVault(vaultName);
+    // Observably the same as a delete for the sync engine: the file goes away
+    // and a delete event fires. Where it lands is the user's preference.
+    this.fileManager = {
+      trashFile: (file: TFile) => this.vault.delete(file)
+    };
   }
 }
 

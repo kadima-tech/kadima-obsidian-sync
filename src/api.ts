@@ -65,8 +65,9 @@ export class KadimaApiClient {
     });
 
     if (response.status >= 400) {
+      const errorPayload: unknown = response.json;
       const message =
-        (response.json as { error?: string } | null)?.error ??
+        (errorPayload as { error?: string } | null)?.error ??
         `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status);
     }
@@ -85,7 +86,11 @@ export class KadimaApiClient {
       if (!dataStr) continue;
       let data: Record<string, unknown>;
       try {
-        data = JSON.parse(dataStr);
+        const parsed: unknown = JSON.parse(dataStr);
+        if (typeof parsed !== "object" || parsed === null) {
+          continue;
+        }
+        data = parsed as Record<string, unknown>;
       } catch {
         continue;
       }
@@ -255,13 +260,15 @@ export class KadimaApiClient {
     });
 
     if (response.status >= 400) {
-      const payload = response.json ?? response.text;
+      const json: unknown = response.json;
+      const payload = json ?? response.text;
       const message =
         (payload as { error?: string } | undefined)?.error ??
         `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status, payload);
     }
 
-    return (response.json ?? undefined) as T;
+    const json: unknown = response.json;
+    return (json ?? undefined) as T;
   }
 }

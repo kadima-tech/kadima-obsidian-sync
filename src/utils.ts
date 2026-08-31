@@ -51,7 +51,7 @@ export function inferFileKind(path: string): FileKind {
 export function shouldSyncPath(
   path: string,
   syncHiddenFiles: boolean,
-  configDir = ".obsidian"
+  configDir: string
 ): boolean {
   const normalized = normalizeVaultPath(path);
   const pluginDataPrefix = normalizeVaultPath(`${configDir}/plugins/${PLUGIN_ID}/`);
