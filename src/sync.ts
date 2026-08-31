@@ -609,11 +609,9 @@ export class KadimaSyncEngine {
     if (mutation.deleted) {
       if (existing instanceof TFile) {
         await this.withSuppressedEvents(async () => {
-          if (typeof this.app.fileManager?.trashFile === "function") {
-            await this.app.fileManager.trashFile(existing);
-          } else {
-            await this.app.vault.delete(existing, true);
-          }
+          // trashFile honours the user's "deleted files" preference; vault.delete
+          // would bypass it.
+          await this.app.fileManager.trashFile(existing);
         });
       }
       this.store.upsertFileState(mutation.path, {

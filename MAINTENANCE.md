@@ -12,6 +12,23 @@
   from the top of the settings tab, the auto-sync poll registered through `Plugin.registerInterval`, and the
   `as any` on `requestUrl` removed along with the unused `timeout` option that forced it.
 
+### 2026-08-31 — Automated directory review findings (0.2.0 → 0.2.1)
+The Obsidian Community automated review flagged two errors and five warnings against release `0.2.0`. Fixed:
+- `navigator.userAgent` OS sniffing replaced with the `Platform` API (`src/auth.ts`).
+- `minAppVersion` raised `1.6.0` → `1.6.6`, the version that introduced `FileManager.trashFile`. The runtime
+  `typeof … === "function"` guard and its `vault.delete` fallback existed only for older apps and are gone, so
+  remote deletes now always honour the user's "Deleted files" preference.
+- `any` from `JSON.parse` and `RequestUrlResponse.json` funnelled through `unknown` before narrowing
+  (`src/api.ts`).
+- `onunload` made synchronous — `Plugin` declares it `void` and Obsidian never awaited it.
+- The hardcoded `.obsidian` config folder replaced with `Vault#configDir` (`src/utils.ts`, `src/settings.ts`).
+  The test mock was missing `configDir` entirely, so the engine had been passing `undefined` in tests.
+- Release assets now carry GitHub build-provenance attestations (`actions/attest-build-provenance`).
+
+Not acted on: the review's suggestion to adopt the 1.13.0 declarative settings API (`getSettingDefinitions()`).
+It is advisory, the shipped `obsidian` typings (1.12.3) do not declare it, and adopting it would mean raising
+`minAppVersion` to 1.13.0 and dropping users on older builds. Revisit when 1.13 is the floor worth requiring.
+
 ## Recurring Patterns
 
 ### Releasing a plugin version

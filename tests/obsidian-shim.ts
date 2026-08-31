@@ -5,6 +5,14 @@ export function normalizePath(path: string): string {
 }
 
 export { FakeApp as App, Notice, TFile, TFolder, TAbstractFile };
+
+// Tests exercise the desktop path; mobile-specific behaviour has no coverage yet.
+export const Platform = {
+  isDesktop: true,
+  isMobile: false,
+  isDesktopApp: true,
+  isMobileApp: false
+};
 export type Plugin = any;
 
 export async function requestUrl(options: {

@@ -1,4 +1,4 @@
-import type { App } from "obsidian";
+import { Platform, type App } from "obsidian";
 import { PluginStore } from "./store";
 import { KadimaApiClient } from "./api";
 import { REMOTE_VAULT_REMOVED_MESSAGE } from "./constants";
@@ -82,7 +82,7 @@ export class KadimaAuthService {
     const session = await this.api.createAuthSession({
       vaultName: this.app.vault.getName(),
       pluginVersion: this.pluginVersion,
-      platform: /Mobile/i.test(window.navigator.userAgent) ? "mobile" : "desktop"
+      platform: Platform.isMobile ? "mobile" : "desktop"
     });
 
     // Open the connect page on the API host the plugin is talking to. The

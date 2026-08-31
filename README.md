@@ -54,7 +54,11 @@ Conflicted local changes are preserved in `.kadima-conflicts` by default.
 - Requires network access to Kadima services for authentication and synchronization.
 - Opens an external browser window or tab during account connection.
 - Stores Kadima authentication tokens and sync state in Obsidian's local plugin data on the device.
+- Reads every file path in the vault. Working out what changed requires enumerating the whole vault, so the
+  plugin sees all paths, including those it will not sync.
 - Syncs vault content to Kadima's hosted service. Hidden files are excluded by default, but users can enable syncing hidden files, which may include vault configuration content.
+- Deletes arriving from the sync service go through Obsidian's `FileManager.trashFile`, so they follow the
+  vault's own "Deleted files" preference rather than bypassing it.
 - Does not include ads or client-side telemetry.
 - Source code is available in this repository.
 

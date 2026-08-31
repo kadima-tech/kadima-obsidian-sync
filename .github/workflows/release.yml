@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Required to sign build provenance for the release assets.
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v6
 
@@ -22,6 +25,14 @@ jobs:
         run: |
           npm install
           npm run build
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create release
         env:

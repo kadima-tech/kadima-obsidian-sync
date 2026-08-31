@@ -100,7 +100,9 @@ export class KadimaSyncSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Sync hidden files")
-      .setDesc("Include dotfiles such as `.obsidian` content.")
+      .setDesc(
+        `Include dotfiles such as ${this.app.vault.configDir} content.`
+      )
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.store.settings.syncHiddenFiles)

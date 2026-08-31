@@ -50,9 +50,10 @@ export default class KadimaSyncPlugin extends Plugin {
     this.sync.start();
   }
 
-  override async onunload(): Promise<void> {
+  override onunload(): void {
     this.sync?.stop();
-    await this.store?.flush();
+    // Obsidian does not await onunload, so this was never awaited in practice.
+    void this.store?.flush();
   }
 
   async connectAccount(): Promise<void> {
