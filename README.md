@@ -1,6 +1,6 @@
 # Kadima Sync
 
-Kadima Sync connects an Obsidian vault to Kadima and keeps notes and files in sync across devices through Kadima's hosted sync service.
+Kadima Sync connects an Obsidian vault to Kadima and keeps notes and files in sync across devices through Kadima's hosted sync service. Once a vault is synced, it is also readable from the Kadima apps — [Draggen](https://draggen.io) and [Talebuddy](https://talebuddy.io) — without exporting or copying anything by hand.
 
 ## Features
 
@@ -9,6 +9,22 @@ Kadima Sync connects an Obsidian vault to Kadima and keeps notes and files in sy
 - Keep local edits local-first and synchronize changes with per-file revisions
 - Preserve conflicts as separate files instead of silently overwriting local work
 - Support create, edit, rename, and delete operations
+
+## Works with Draggen and Talebuddy
+
+A synced vault lives in your Kadima account, and the other Kadima apps read from that same copy:
+
+- **[Draggen](https://draggen.io)** — the visual canvas and moodboard app. Its dashboard has a **Vault** tab that
+  browses your synced vault, previews notes, and renders Obsidian Canvas (`.canvas`) files, so worldbuilding notes
+  you already wrote in Obsidian can sit beside the board you are building.
+- **[Talebuddy](https://talebuddy.io)** — the long-form writing app. The writing desk's sidebar has an **Obsidian**
+  tab next to the Creative Ledger, so research, lore, and character notes stay one click from the manuscript
+  instead of in another window.
+
+Both apps read the vault; they never write back into it. Obsidian stays the place your notes are edited, and this
+plugin stays the only thing that changes them.
+
+Vault sync is part of a paid Kadima subscription and covers the same account across Draggen and Talebuddy.
 
 ## Installation
 

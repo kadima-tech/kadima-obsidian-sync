@@ -26,6 +26,7 @@ describe('KadimaSyncEngine Integration', () => {
             loadData: vi.fn().mockResolvedValue({}),
             saveData: vi.fn().mockResolvedValue(undefined),
             registerEvent: vi.fn(),
+            registerInterval: vi.fn((id: number) => id),
         };
 
         store = new PluginStore(plugin);

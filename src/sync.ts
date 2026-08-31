@@ -94,9 +94,11 @@ export class KadimaSyncEngine {
     }
 
     const intervalMs = Math.max(this.getSettings().autoSyncIntervalSeconds, 10) * 1000;
-    this.syncTimer = window.setInterval(() => {
-      void this.syncNow("interval");
-    }, intervalMs);
+    this.syncTimer = this.plugin.registerInterval(
+      window.setInterval(() => {
+        void this.syncNow("interval");
+      }, intervalMs)
+    );
   }
 
   async syncNow(reason: "launch" | "interval" | "save" | "manual"): Promise<void> {
