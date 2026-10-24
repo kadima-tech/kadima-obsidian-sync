@@ -3,7 +3,7 @@ import { KadimaAuthService, pairingApprovalUrl } from '../src/auth';
 import { FakeApp } from './mocks/obsidian';
 import { PluginStore } from '../src/store';
 import { KadimaApiClient } from '../src/api';
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse } from 'msw/http';
 import { server } from './setup';
 import { DEFAULT_SETTINGS } from '../src/constants';
 
