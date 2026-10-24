@@ -1,6 +1,6 @@
 import { beforeAll, afterEach, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http } from 'msw/http';
 import { webcrypto } from 'node:crypto';
 
 // Add fetch and crypto polyfills
@@ -12,6 +12,6 @@ if (!globalThis.crypto) {
 
 export const server = setupServer();
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+beforeAll(() => server.listen({ onUnhandledFrame: 'warn' }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
